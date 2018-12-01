@@ -6,9 +6,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-/* Copyright 2004-present Facebook. All Rights Reserved.
-   Index based on product quantiztion.
-*/
+// -*- c++ -*-
 
 #include "ProductQuantizer.h"
 
@@ -38,8 +36,6 @@ int sgemm_ (const char *transa, const char *transb, FINTEGER *m, FINTEGER *
 
 
 namespace faiss {
-
-
 
 
 /* compute an estimator using look-up tables for typical values of M */
@@ -150,13 +146,13 @@ static inline void pq_estimators_from_tables (const ProductQuantizer * pq,
 
 
 ProductQuantizer::ProductQuantizer (size_t d, size_t M, size_t nbits):
-    d(d), M(M),  nbits(nbits)
+    d(d), M(M), nbits(nbits), assign_index(nullptr)
 {
     set_derived_values ();
 }
 
 ProductQuantizer::ProductQuantizer ():
-    d(0), M(1),  nbits(0)
+    d(0), M(1), nbits(0), assign_index(nullptr)
 {
     set_derived_values ();
 }
@@ -284,7 +280,7 @@ void ProductQuantizer::train (int n, const float * x)
                 printf ("Training PQ slice %d/%zd\n", m, M);
             }
             IndexFlatL2 index (dsub);
-            clus.train (n, xslice, index);
+            clus.train (n, xslice, assign_index ? *assign_index : index);
             set_params (clus.centroids.data(), m);
         }
 
@@ -299,7 +295,8 @@ void ProductQuantizer::train (int n, const float * x)
         }
 
         IndexFlatL2 index (dsub);
-        clus.train (n * M, x, index);
+
+        clus.train (n * M, x, assign_index ? *assign_index : index);
         for (int m = 0; m < M; m++) {
             set_params (clus.centroids.data(), m);
         }
@@ -355,7 +352,7 @@ void ProductQuantizer::decode (const uint8_t *code, float *x) const
 void ProductQuantizer::decode (const uint8_t *code, float *x, size_t n) const
 {
     for (size_t i = 0; i < n; i++) {
-        this->decode (code + M * i, x + d * i);
+        this->decode (code + code_size * i, x + d * i);
     }
 }
 
@@ -658,10 +655,6 @@ void ProductQuantizer::search_sdc (const uint8_t * qcodes,
     }
 
 }
-
-
-
-
 
 
 } // namespace faiss

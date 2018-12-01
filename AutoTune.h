@@ -6,7 +6,6 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-// Copyright 2004-present Facebook. All Rights Reserved.
 // -*- c++ -*-
 
 #ifndef FAISS_AUTO_TUNE_H
@@ -15,6 +14,7 @@
 #include <vector>
 
 #include "Index.h"
+#include "IndexBinary.h"
 
 namespace faiss {
 
@@ -162,7 +162,7 @@ struct ParameterSpace {
     /// print a description on stdout
     void display () const;
 
-    /// add a new parameter
+    /// add a new parameter (or return it if it exists)
     ParameterRange &add_range(const char * name);
 
     /// initialize with reasonable parameters for the index
@@ -203,7 +203,7 @@ struct ParameterSpace {
 Index *index_factory (int d, const char *description,
                       MetricType metric = METRIC_L2);
 
-
+IndexBinary *index_binary_factory (int d, const char *description);
 
 } // namespace faiss
 

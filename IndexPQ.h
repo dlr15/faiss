@@ -6,7 +6,6 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-// Copyright 2004-present Facebook. All Rights Reserved.
 // -*- c++ -*-
 
 #ifndef FAISS_INDEX_PQ_H
@@ -62,6 +61,8 @@ struct IndexPQ: Index {
     void reconstruct_n(idx_t i0, idx_t ni, float* recons) const override;
 
     void reconstruct(idx_t key, float* recons) const override;
+
+    long remove_ids(const IDSelector& sel) override;
 
     /******************************************************
      * Polysemous codes implementation
@@ -142,11 +143,8 @@ struct MultiIndexQuantizer: Index  {
     void train(idx_t n, const float* x) override;
 
     void search(
-        idx_t n,
-        const float* x,
-        idx_t k,
-        float* distances,
-        idx_t* labels) const override;
+        idx_t n, const float* x, idx_t k,
+        float* distances, idx_t* labels) const override;
 
     /// add and reset will crash at runtime
     void add(idx_t n, const float* x) override;
@@ -158,8 +156,33 @@ struct MultiIndexQuantizer: Index  {
 };
 
 
-} // namespace faiss
+/** MultiIndexQuantizer where the PQ assignmnet is performed by sub-indexes
+ */
+struct MultiIndexQuantizer2: MultiIndexQuantizer {
 
+    /// M Indexes on d / M dimensions
+    std::vector<Index*> assign_indexes;
+    bool own_fields;
+
+    MultiIndexQuantizer2 (
+        int d, size_t M, size_t nbits,
+        Index **indexes);
+
+    MultiIndexQuantizer2 (
+        int d, size_t nbits,
+        Index *assign_index_0,
+        Index *assign_index_1);
+
+    void train(idx_t n, const float* x) override;
+
+    void search(
+        idx_t n, const float* x, idx_t k,
+        float* distances, idx_t* labels) const override;
+
+};
+
+
+} // namespace faiss
 
 
 #endif

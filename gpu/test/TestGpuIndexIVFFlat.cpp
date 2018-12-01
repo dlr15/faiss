@@ -6,10 +6,9 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-// Copyright 2004-present Facebook. All Rights Reserved.
 
 #include "../../IndexFlat.h"
-#include "../../IndexIVF.h"
+#include "../../IndexIVFFlat.h"
 #include "../GpuIndexIVFFlat.h"
 #include "../StandardGpuResources.h"
 #include "../utils/DeviceUtils.h"
@@ -73,8 +72,6 @@ void queryTest(faiss::MetricType metricType,
                bool useFloat16,
                int dimOverride = -1) {
   for (int tries = 0; tries < 3; ++tries) {
-    faiss::gpu::newTestSeed();
-
     Options opt;
     opt.dim = dimOverride != -1 ? dimOverride : opt.dim;
 
@@ -117,7 +114,7 @@ void queryTest(faiss::MetricType metricType,
                                // FIXME: the fp16 bounds are
                                // useless when math (the accumulator) is
                                // in fp16. Figure out another way to test
-                               compFloat16 ? 0.99f : 0.1f,
+                               compFloat16 ? 0.70f : 0.1f,
                                compFloat16 ? 0.65f : 0.015f);
   }
 }
@@ -126,8 +123,6 @@ void addTest(faiss::MetricType metricType,
              bool useFloat16CoarseQuantizer,
              bool useFloat16) {
   for (int tries = 0; tries < 5; ++tries) {
-    faiss::gpu::newTestSeed();
-
     Options opt;
 
     std::vector<float> trainVecs = faiss::gpu::randVecs(opt.numTrain, opt.dim);
@@ -177,8 +172,6 @@ void addTest(faiss::MetricType metricType,
 
 void copyToTest(bool useFloat16CoarseQuantizer,
                 bool useFloat16) {
-  faiss::gpu::newTestSeed();
-
   Options opt;
   std::vector<float> trainVecs = faiss::gpu::randVecs(opt.numTrain, opt.dim);
   std::vector<float> addVecs = faiss::gpu::randVecs(opt.numAdd, opt.dim);
@@ -227,8 +220,6 @@ void copyToTest(bool useFloat16CoarseQuantizer,
 
 void copyFromTest(bool useFloat16CoarseQuantizer,
                   bool useFloat16) {
-  faiss::gpu::newTestSeed();
-
   Options opt;
   std::vector<float> trainVecs = faiss::gpu::randVecs(opt.numTrain, opt.dim);
   std::vector<float> addVecs = faiss::gpu::randVecs(opt.numAdd, opt.dim);
@@ -392,8 +383,6 @@ TEST(TestGpuIndexIVFFlat, Float32_32_CopyTo) {
 }
 
 TEST(TestGpuIndexIVFFlat, Float32_negative) {
-  faiss::gpu::newTestSeed();
-
   Options opt;
 
   auto trainVecs = faiss::gpu::randVecs(opt.numTrain, opt.dim);
@@ -458,8 +447,6 @@ TEST(TestGpuIndexIVFFlat, Float32_negative) {
 //
 
 TEST(TestGpuIndexIVFFlat, QueryNaN) {
-  faiss::gpu::newTestSeed();
-
   Options opt;
 
   std::vector<float> trainVecs = faiss::gpu::randVecs(opt.numTrain, opt.dim);
@@ -506,8 +493,6 @@ TEST(TestGpuIndexIVFFlat, QueryNaN) {
 }
 
 TEST(TestGpuIndexIVFFlat, AddNaN) {
-  faiss::gpu::newTestSeed();
-
   Options opt;
 
   faiss::gpu::StandardGpuResources res;
@@ -612,4 +597,13 @@ TEST(TestGpuIndexIVFFlat, UnifiedMemory) {
                              kF32MaxRelErr,
                              0.1f,
                              0.015f);
+}
+
+int main(int argc, char** argv) {
+  testing::InitGoogleTest(&argc, argv);
+
+  // just run with a fixed test seed
+  faiss::gpu::setTestSeed(100);
+
+  return RUN_ALL_TESTS();
 }

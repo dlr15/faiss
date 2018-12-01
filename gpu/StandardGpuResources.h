@@ -6,7 +6,6 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-// Copyright 2004-present Facebook. All Rights Reserved.
 
 #pragma once
 
@@ -48,6 +47,10 @@ class StandardGpuResources : public GpuResources {
   /// Called to change the work ordering streams to the null stream
   /// for all devices
   void setDefaultNullStreamAllDevices();
+
+  /// Enable or disable the warning about not having enough temporary memory
+  /// when cudaMalloc gets called
+  void setCudaMallocWarning(bool b);
 
  public:
   /// Internal system calls
@@ -101,6 +104,9 @@ class StandardGpuResources : public GpuResources {
 
   /// Amount of pinned memory we should allocate
   size_t pinnedMemSize_;
+
+  /// Whether or not a warning upon cudaMalloc is generated
+  bool cudaMallocWarning_;
 };
 
 } } // namespace

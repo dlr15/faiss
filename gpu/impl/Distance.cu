@@ -6,7 +6,6 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-// Copyright 2004-present Facebook. All Rights Reserved.
 
 #include "Distance.cuh"
 #include "BroadcastSum.cuh"
@@ -20,6 +19,7 @@
 #include "../utils/BlockSelectKernel.cuh"
 
 #include <memory>
+#include <algorithm>
 #include <thrust/fill.h>
 #include <thrust/for_each.h>
 #include <thrust/device_ptr.h>

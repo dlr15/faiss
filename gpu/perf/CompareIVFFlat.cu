@@ -6,9 +6,8 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-// Copyright 2004-present Facebook. All Rights Reserved.
 
-#include "../../IndexIVF.h"
+#include "../../IndexIVFFlat.h"
 #include "../../index_io.h"
 #include "../../utils.h"
 

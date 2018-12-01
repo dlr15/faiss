@@ -92,7 +92,7 @@ class TestProductQuantizer(unittest.TestCase):
 
     def test_pq(self):
         d = 64
-        n = 1000
+        n = 2000
         cs = 4
         np.random.seed(123)
         x = np.random.random(size=(n, d)).astype('float32')
@@ -103,8 +103,20 @@ class TestProductQuantizer(unittest.TestCase):
         diff = ((x - x2)**2).sum()
 
         # print "diff=", diff
-        # diff= 1807.98
-        self.assertGreater(2500, diff)
+        # diff= 4418.0562
+        self.assertGreater(5000, diff)
+
+        pq10 = faiss.ProductQuantizer(d, cs, 10)
+        assert pq10.code_size == cs * 2
+        pq10.verbose = True
+        pq10.cp.verbose = True
+        pq10.train(x)
+        codes = pq10.compute_codes(x)
+
+        x10 = pq10.decode(codes)
+        diff10 = ((x - x10)**2).sum()
+        self.assertGreater(diff, diff10)
+
 
 
 class TestRevSwigPtr(unittest.TestCase):
@@ -146,9 +158,9 @@ class TestException(unittest.TestCase):
         else:
             assert False, 'exception did not fire???'
 
-class TestMapLong2Long:
+class TestMapLong2Long(unittest.TestCase):
 
-    def test_do_it(self):
+    def test_maplong2long(self):
         keys = np.array([13, 45, 67])
         vals = np.array([3, 8, 2])
 
@@ -159,6 +171,67 @@ class TestMapLong2Long:
 
         assert m.search(12343) == -1
 
+
+class TestOrthognalReconstruct(unittest.TestCase):
+
+    def test_recons_orthonormal(self):
+        lt = faiss.LinearTransform(20, 10, True)
+        rs = np.random.RandomState(10)
+        A, _ = np.linalg.qr(rs.randn(20, 20))
+        A = A[:10].astype('float32')
+        faiss.copy_array_to_vector(A.ravel(), lt.A)
+        faiss.copy_array_to_vector(rs.randn(10).astype('float32'), lt.b)
+
+        lt.set_is_orthonormal()
+        assert lt.is_orthonormal
+
+        x = rs.rand(30, 20).astype('float32')
+        xt = lt.apply_py(x)
+        xtt = lt.reverse_transform(xt)
+        xttt = lt.apply_py(xtt)
+
+        err = ((xt - xttt)**2).sum()
+
+        self.assertGreater(1e-5, err)
+
+    def test_recons_orthogona_impossible(self):
+        lt = faiss.LinearTransform(20, 10, True)
+        rs = np.random.RandomState(10)
+        A = rs.randn(10 * 20).astype('float32')
+        faiss.copy_array_to_vector(A.ravel(), lt.A)
+        faiss.copy_array_to_vector(rs.randn(10).astype('float32'), lt.b)
+
+        lt.set_is_orthonormal()
+        assert not lt.is_orthonormal
+
+        x = rs.rand(30, 20).astype('float32')
+        xt = lt.apply_py(x)
+        try:
+            lt.reverse_transform(xt)
+        except Exception:
+            pass
+        else:
+            self.assertFalse('should do an exception')
+
+
+class TestMAdd(unittest.TestCase):
+
+    def test_1(self):
+        # try with dimensions that are multiples of 16 or not
+        rs = np.random.RandomState(123)
+        swig_ptr = faiss.swig_ptr
+        for dim in 16, 32, 20, 25:
+            for repeat in 1, 2, 3, 4, 5:
+                a = rs.rand(dim).astype('float32')
+                b = rs.rand(dim).astype('float32')
+                c = np.zeros(dim, dtype='float32')
+                bf = rs.uniform(5.0) - 2.5
+                idx = faiss.fvec_madd_and_argmin(
+                    dim, swig_ptr(a), bf, swig_ptr(b),
+                    swig_ptr(c))
+                ref_c = a + b * bf
+                assert np.abs(c - ref_c).max() < 1e-5
+                assert idx == ref_c.argmin()
 
 if __name__ == '__main__':
     unittest.main()

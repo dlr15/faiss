@@ -6,7 +6,6 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-// Copyright 2004-present Facebook. All Rights Reserved.
 
 #include "../../IndexFlat.h"
 #include "../../IndexIVFPQ.h"
@@ -95,7 +94,7 @@ struct Options {
   }
 
   float getPctMaxDiffN() const {
-    return useFloat16 ? 0.05f : 0.015f;
+    return useFloat16 ? 0.05f : 0.02f;
   }
 
   int numAdd;
@@ -115,8 +114,6 @@ struct Options {
 
 TEST(TestGpuIndexIVFPQ, Query) {
   for (int tries = 0; tries < 5; ++tries) {
-    faiss::gpu::newTestSeed();
-
     Options opt;
 
     std::vector<float> trainVecs = faiss::gpu::randVecs(opt.numTrain, opt.dim);
@@ -151,8 +148,6 @@ TEST(TestGpuIndexIVFPQ, Query) {
 
 TEST(TestGpuIndexIVFPQ, Add) {
   for (int tries = 0; tries < 5; ++tries) {
-    faiss::gpu::newTestSeed();
-
     Options opt;
 
     std::vector<float> trainVecs = faiss::gpu::randVecs(opt.numTrain, opt.dim);
@@ -188,8 +183,6 @@ TEST(TestGpuIndexIVFPQ, Add) {
 }
 
 TEST(TestGpuIndexIVFPQ, CopyTo) {
-  faiss::gpu::newTestSeed();
-
   Options opt;
   std::vector<float> trainVecs = faiss::gpu::randVecs(opt.numTrain, opt.dim);
   std::vector<float> addVecs = faiss::gpu::randVecs(opt.numAdd, opt.dim);
@@ -241,8 +234,6 @@ TEST(TestGpuIndexIVFPQ, CopyTo) {
 }
 
 TEST(TestGpuIndexIVFPQ, CopyFrom) {
-  faiss::gpu::newTestSeed();
-
   Options opt;
   std::vector<float> trainVecs = faiss::gpu::randVecs(opt.numTrain, opt.dim);
   std::vector<float> addVecs = faiss::gpu::randVecs(opt.numAdd, opt.dim);
@@ -292,8 +283,6 @@ TEST(TestGpuIndexIVFPQ, CopyFrom) {
 }
 
 TEST(TestGpuIndexIVFPQ, QueryNaN) {
-  faiss::gpu::newTestSeed();
-
   Options opt;
 
   std::vector<float> trainVecs = faiss::gpu::randVecs(opt.numTrain, opt.dim);
@@ -343,8 +332,6 @@ TEST(TestGpuIndexIVFPQ, QueryNaN) {
 }
 
 TEST(TestGpuIndexIVFPQ, AddNaN) {
-  faiss::gpu::newTestSeed();
-
   Options opt;
 
   faiss::gpu::StandardGpuResources res;
@@ -450,4 +437,13 @@ TEST(TestGpuIndexIVFPQ, UnifiedMemory) {
                              0.015f,
                              0.1f,
                              0.015f);
+}
+
+int main(int argc, char** argv) {
+  testing::InitGoogleTest(&argc, argv);
+
+  // just run with a fixed test seed
+  faiss::gpu::setTestSeed(100);
+
+  return RUN_ALL_TESTS();
 }

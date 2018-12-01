@@ -6,6 +6,8 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+// -*- c++ -*-
+
 #ifndef FAISS_INDEX_SCALAR_QUANTIZER_H
 #define FAISS_INDEX_SCALAR_QUANTIZER_H
 
@@ -34,6 +36,7 @@ struct ScalarQuantizer {
         QT_4bit,             ///< 4 bits per component
         QT_8bit_uniform,     ///< same, shared range for all dimensions
         QT_4bit_uniform,
+        QT_fp16,
     };
 
     QuantizerType qtype;
@@ -74,7 +77,24 @@ struct ScalarQuantizer {
                         size_t n) const ;
 
     /// decode a vector from a given code (or n vectors if third argument)
-     void decode (const uint8_t *code, float *x, size_t n) const;
+    void decode (const uint8_t *code, float *x, size_t n) const;
+
+    // fast, non thread-safe way of computing vector-to-code and
+    // code-to-code distances.
+    struct DistanceComputer {
+
+        /// vector-to-code distance computation
+        virtual float compute_distance (const float *x,
+                                        const uint8_t *code) = 0;
+
+        /// code-to-code distance computation
+        virtual float compute_code_distance (const uint8_t *code1,
+                                             const uint8_t *code2) = 0;
+        virtual ~DistanceComputer () {}
+    };
+
+    DistanceComputer *get_distance_computer (MetricType metric = METRIC_L2)
+        const;
 
 };
 
@@ -126,7 +146,7 @@ struct IndexScalarQuantizer: Index {
  * distances are computed.
  */
 
-struct IndexIVFScalarQuantizer:IndexIVF {
+struct IndexIVFScalarQuantizer: IndexIVF {
     ScalarQuantizer sq;
 
     IndexIVFScalarQuantizer(Index *quantizer, size_t d, size_t nlist,
@@ -143,7 +163,12 @@ struct IndexIVFScalarQuantizer:IndexIVF {
                              const idx_t *assign,
                              const float *centroid_dis,
                              float *distances, idx_t *labels,
-                             bool store_pairs) const override;
+                             bool store_pairs,
+                             const IVFSearchParameters *params=nullptr
+                             ) const override;
+
+    void reconstruct_from_offset (long list_no, long offset,
+                                  float* recons) const override;
 
 };
 

@@ -6,7 +6,6 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-// Copyright 2004-present Facebook. All Rights Reserved.
 
 #include "GpuIndexIVF.h"
 #include "../FaissAssert.h"
@@ -188,8 +187,6 @@ GpuIndexIVF::copyTo(faiss::IndexIVF* index) const {
   index->quantizer_trains_alone = 0;
   index->own_fields = true;
   index->cp = this->cp;
-  index->ids.clear();
-  index->ids.resize(nlist_);
   index->maintain_direct_map = false;
   index->direct_map.clear();
 }
